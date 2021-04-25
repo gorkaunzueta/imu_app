@@ -38,6 +38,7 @@
 #include "cfe_sb.h"
 #include "cfe_es.h"
 
+#include "mpu9dof_lib.h"
 
 #include "imu_app_perfids.h"
 #include "imu_app_msgids.h"
@@ -68,7 +69,12 @@ typedef struct
     */
     uint8 CmdCounter;
     uint8 ErrCounter;
-
+    
+    mpu9dof_t mpu9dof;
+    int16_t Accel_x;
+    int16_t Accel_y;
+    int16_t Accel_z;
+    
     /*
     ** Housekeeping telemetry packet...
     */

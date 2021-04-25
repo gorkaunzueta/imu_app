@@ -64,9 +64,12 @@ typedef IMU_APP_NoArgsCmd_t IMU_APP_ProcessCmd_t;
 
 typedef struct
 {
-    uint8 CommandErrorCounter;
-    uint8 CommandCounter;
-    uint8 spare[2];
+    uint8   CommandErrorCounter;
+    uint8   CommandCounter;
+    int16_t Accel_x;
+    int16_t Accel_y;
+    int16_t Accel_z;
+    uint8   spare[2];
 } IMU_APP_HkTlm_Payload_t;
 
 typedef struct

@@ -33,7 +33,7 @@
 #include "imu_app.h"
 #include "imu_app_table.h"
 
-
+#include "mpu9dof_lib.h"
 
 /*
 ** global data
@@ -197,7 +197,7 @@ int32 IMU_APP_Init(void)
     /*
     ** Register Table(s)
     */
-    status = CFE_TBL_Register(&IMU_APP_Data.TblHandles[0], "IMUAppTable", sizeof(IMU_APP_Table_t),
+    status = CFE_TBL_Register(&IMU_APP_Data.TblHandles[0], "ImuAppTable", sizeof(IMU_APP_Table_t),
                               CFE_TBL_OPT_DEFAULT, IMU_APP_TblValidationFunc);
     if (status != CFE_SUCCESS)
     {
@@ -212,6 +212,10 @@ int32 IMU_APP_Init(void)
 
     CFE_EVS_SendEvent(IMU_APP_STARTUP_INF_EID, CFE_EVS_EventType_INFORMATION, "IMU App Initialized.%s",
                       IMU_APP_VERSION_STRING);
+                      
+    /* Initialize the mpu9dof class to acquire from the IMU */
+    IMU_APP_Data.mpu9dof.slave_address =         MPU9DOF_XLG_I2C_ADDR_0;
+    IMU_APP_Data.mpu9dof.magnetometer_address =  MPU9DOF_M_I2C_ADDR_0;
 
     return (CFE_SUCCESS);
 
@@ -314,12 +318,19 @@ void IMU_APP_ProcessGroundCommand(CFE_SB_Buffer_t *SBBufPtr)
 int32 IMU_APP_ReportHousekeeping(const CFE_MSG_CommandHeader_t *Msg)
 {
     int i;
+    
+    /* Get the acceleration values */
+    mpu9dof_read_accel ( &IMU_APP_Data.mpu9dof, &IMU_APP_Data.Accel_x, &IMU_APP_Data.Accel_y, &IMU_APP_Data.Accel_z );
+    
 
     /*
     ** Get command execution counters...
     */
     IMU_APP_Data.HkTlm.Payload.CommandErrorCounter = IMU_APP_Data.ErrCounter;
     IMU_APP_Data.HkTlm.Payload.CommandCounter      = IMU_APP_Data.CmdCounter;
+    IMU_APP_Data.HkTlm.Payload.Accel_x             = IMU_APP_Data.Accel_x;
+    IMU_APP_Data.HkTlm.Payload.Accel_y             = IMU_APP_Data.Accel_y;
+    IMU_APP_Data.HkTlm.Payload.Accel_z             = IMU_APP_Data.Accel_z;
 
     /*
     ** Send housekeeping telemetry packet...
@@ -387,7 +398,7 @@ int32 IMU_APP_Process(const IMU_APP_ProcessCmd_t *Msg)
 {
     int32               status;
     IMU_APP_Table_t *TblPtr;
-    const char *        TableName = "IMU_APP.IMUAppTable";
+    const char *        TableName = "IMU_APP.ImuAppTable";
 
     /* IMU Use of Table */
 
